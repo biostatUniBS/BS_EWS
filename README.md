@@ -1,4 +1,4 @@
-# BS_EWS
+# BS-EWS
 
 Code for paper (under revision)
 
