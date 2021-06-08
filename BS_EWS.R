@@ -334,15 +334,15 @@ names(data_maroldi_summer)
 
 # Descriptive Statistics on first exam####
 #dead-alive
-table_1exam<- tableby(~Eta_paziente+Sesso+giorni_ricovero+Score+D_dimer+Fibrinogen+LDH+Neutrophils+Lymphocytes+Neutrophils_Lymphocytes+Neutrophils_perc+Lymphocytes_perc+PCR+WBC+Basophils+Basophils_perc+Eosinophils+Eosinophils_perc+Monocytes+Monocytes_perc+Neutrophils_perc, data = data_maroldi_all_1, numeric.stats = c("Nmiss","meansd", "medianq1q3", "range"), digits=2, digits.count=0)
+table_1exam<- tableby(~Eta_paziente+Sesso+giorni_ricovero+Score+D_dimer+Fibrinogen+LDH+Neutrophils+Lymphocytes+Neutrophils_Lymphocytes+Neutrophils_perc+Lymphocytes_perc+PCR+WBC+Basophils_perc+Eosinophils+Eosinophils_perc+Monocytes+Monocytes_perc+Neutrophils_perc, data = data_maroldi_all_1, numeric.stats = c("Nmiss","meansd", "medianq1q3", "range"), digits=2, digits.count=0)
 summary(table_1exam)
 write2word(table_1exam,"table_1exam.doc")
 
-table_dead_alive_all_1<- tableby(outcome ~Eta_paziente+Sesso+giorni_ricovero+Score+D_dimer+Fibrinogen+LDH+Neutrophils+Lymphocytes+Neutrophils_Lymphocytes+Neutrophils_perc+Lymphocytes_perc+PCR+WBC+Basophils+Basophils_perc+Eosinophils+Eosinophils_perc+Monocytes+Monocytes_perc+Neutrophils_perc, data = data_maroldi_all_1, numeric.stats = c("Nmiss","meansd", "medianq1q3", "range"),total=TRUE, digits=2, digits.p=3, digits.count=0, test = TRUE,numeric.test = "kwt")
+table_dead_alive_all_1<- tableby(outcome ~Eta_paziente+Sesso+giorni_ricovero+Score+D_dimer+Fibrinogen+LDH+Neutrophils+Lymphocytes+Neutrophils_Lymphocytes+Neutrophils_perc+Lymphocytes_perc+PCR+WBC+Eosinophils+Eosinophils_perc+Monocytes+Monocytes_perc+Neutrophils_perc, data = data_maroldi_all_1, numeric.stats = c("Nmiss","meansd", "medianq1q3", "range"),total=TRUE, digits=2, digits.p=3, digits.count=0, test = TRUE,numeric.test = "kwt")
 summary(table_dead_alive_all_1)
 write2word(table_dead_alive_all_1,"table_dead_alive_all_1.doc")
 
-table_Sex_all_1<- tableby(Sesso~outcome+Eta_paziente+Sesso+giorni_ricovero+Score+D_dimer+Fibrinogen+LDH+Neutrophils+Lymphocytes+Neutrophils/Lymphocytes+Neutrophils_perc+Lymphocytes_perc+PCR+WBC+Basophils+Basophils_perc+Eosinophils+Eosinophils_perc+Monocytes+Monocytes_perc+Neutrophils_perc, data = data_maroldi_all_1, numeric.stats = c("Nmiss","meansd", "medianq1q3", "range"),total=TRUE, digits=2, digits.p=3, digits.count=0, test = TRUE,numeric.test = "kwt",cat.test="fe")
+table_Sex_all_1<- tableby(Sesso~outcome+Eta_paziente+Sesso+giorni_ricovero+Score+D_dimer+Fibrinogen+LDH+Neutrophils+Lymphocytes+Neutrophils/Lymphocytes+Neutrophils_perc+Lymphocytes_perc+PCR+WBC+Eosinophils+Eosinophils_perc+Monocytes+Monocytes_perc+Neutrophils_perc, data = data_maroldi_all_1, numeric.stats = c("Nmiss","meansd", "medianq1q3", "range"),total=TRUE, digits=2, digits.p=3, digits.count=0, test = TRUE,numeric.test = "kwt",cat.test="fe")
 summary(table_Sex_all_1)
 write2word(table_Sex_all_1,"table_Sex_all_1.doc")
 
@@ -350,7 +350,7 @@ write2word(table_Sex_all_1,"table_Sex_all_1.doc")
 # Descriptive Statistics on March and April - first exam - first wave####
 #entire sample
 #all
-table_dead_alive_M_A_1<- tableby(~Eta_paziente+Sesso+giorni_ricovero+Score+D_dimer+Fibrinogen+LDH+Neutrophils+Lymphocytes+Neutrophils_Lymphocytes+Neutrophils_perc+Lymphocytes_perc+PCR+WBC+Basophils+Basophils_perc+Eosinophils+Eosinophils_perc+Monocytes+Monocytes_perc+Neutrophils_perc, data = data_maroldi_M_A_1, numeric.stats = c("Nmiss","meansd", "medianq1q3", "range"),digits=2, digits.count=0)
+table_dead_alive_M_A_1<- tableby(~Eta_paziente+Sesso+giorni_ricovero+Score+D_dimer+Fibrinogen+LDH+Neutrophils+Lymphocytes+Neutrophils_Lymphocytes+Neutrophils_perc+Lymphocytes_perc+PCR+WBC+Eosinophils+Eosinophils_perc+Monocytes+Monocytes_perc+Neutrophils_perc, data = data_maroldi_M_A_1, numeric.stats = c("Nmiss","meansd", "medianq1q3", "range"),digits=2, digits.count=0)
 summary(table_dead_alive_M_A_1)
 write2word(table_dead_alive_M_A_1,"table_dead_alive_M_A_1.doc")
 #dead-alive
@@ -540,113 +540,101 @@ data_maroldi_M_A_1_no_miss_sub1$outcome_dummy<-as.numeric(data_maroldi_M_A_1_no_
 data_maroldi_M_A_1_no_miss_sub1$outcome_dummy<-ifelse(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy==1,0,1)
 table(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy)
 rf_model1<-randomForest(outcome_dummy~.,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(19), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
-rf_model2<-randomForest(as.factor(outcome_dummy)~.,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(19), replace=TRUE, importante=TRUE, proximity = TRUE, type="classification")
+#model 1bis: no age (regression)
 rf_model1_bis<-randomForest(outcome_dummy~.,data=data_maroldi_M_A_1_no_miss_sub1[,2], ntree=10000, mtry=sqrt(19), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
 
-#il model1 fa regressione
+#model1 (regression)
 save(rf_model1, file="rf_model1_reg.Rdata")
-#il model2 fa classification
-save(rf_model2, file="rf_model2_class.Rdata")
-#il modello 1bis elimina età a fa regressione
 
-#se devo calcolare VIM e PDP 
-#eliminiamo l'età e poi sovrascriamo rf_model1_bis su rf_model1_bis
+#we extract VIM in two cases: 1) with age (rf_model1) 2) without age (rf_model1_bis)
 #rf_model1<-rf_model1_bis
-# imp1<-importance(rf_model1)
-# imp_rel<-imp1/max(imp1)*100
-# #imp for graphic
-# imp <- importance(rf_model1)
-# idx1 <- order(-imp)
-# imp1.ord <- imp[idx1,]
+imp1<-importance(rf_model1_bis)
+imp_rel<-imp1/max(imp1)*100
+#imp for graphic
+imp <- importance(rf_model1)
+idx1 <- order(-imp)
+imp1.ord <- imp[idx1,]
 # 
-# imp1rel<-(imp1.ord/max(imp1.ord))*100
+imp1rel<-(imp1.ord/max(imp1.ord))*100
 # 
-# write.table(imp1rel, file="imp1rel.txt")
-# par(mar=c(3,12,2,2), cex=0.5)
+write.table(imp1rel, file="imp1rel.txt")
+par(mar=c(3,12,2,2), cex=0.5)
 # barplot(imp1rel, horiz=TRUE)
-# 
-# # PDP of Random Forests ####
-# library(pdp)
-# p1_LDH <- rf_model1 %>%  # the %>% operator is read as "and then"
-#   partial(pred.var = "LDH") %>%
-#   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="LDH",
-#               main = "", xlim=c(0,2000), ylim=c(0.3,0.6))
-# p1_LDH
+
+# PDP of Random Forests ####
+library(pdp)
+p1_LDH <- rf_model1 %>%  # the %>% operator is read as "and then"
+partial(pred.var = "LDH") %>%
+   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="LDH",
+               main = "", xlim=c(0,2000), ylim=c(0.3,0.6))
+p1_LDH
 # #
-# p2_D_dimer <- rf_model1 %>%  # the %>% operator is read as "and then"
-#   partial(pred.var = "D_dimer") %>%
-#   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="D-dimer",
-#              main = "", xlim=c(180,7000), ylim=c(0.3,0.6))
-# p2_D_dimer
+p2_D_dimer <- rf_model1 %>%  # the %>% operator is read as "and then"
+  partial(pred.var = "D_dimer") %>%
+   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="D-dimer",
+              main = "", xlim=c(180,7000), ylim=c(0.3,0.6))
+ p2_D_dimer
 # #
-# p3_Neutrophils_Lymphocytes <- rf_model1 %>%  # the %>% operator is read as "and then"
-#   partial(pred.var = "Neutrophils_Lymphocytes") %>%
-#   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Neutr/Lymph",
-#               main = "", xlim=c(0,50),ylim=c(0.3,0.6))
-# p3_Neutrophils_Lymphocytes
-# #
-# #
-# p4_Neutrophils_perc <- rf_model1 %>%  # the %>% operator is read as "and then"
-#   partial(pred.var = "Neutrophils_perc") %>%
-#   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Neutrophils %",
-#               main = "", xlim=c(0,1),ylim=c(0.3,0.6))
-# p4_Neutrophils_perc
-# #
-# p5_Fibrinogen_perc <- rf_model1 %>%  # the %>% operator is read as "and then"
-#   partial(pred.var = "Fibrinogen") %>%
-#   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Fibrinogen",
-#               main = "", xlim=c(50,1000))
-# p5_Fibrinogen_perc
+ p3_Neutrophils_Lymphocytes <- rf_model1 %>%  # the %>% operator is read as "and then"
+   partial(pred.var = "Neutrophils_Lymphocytes") %>%
+   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Neutr/Lymph",
+               main = "", xlim=c(0,50),ylim=c(0.3,0.6))
+ p3_Neutrophils_Lymphocytes
 # #
 # #
-# p6_PCR <- rf_model1 %>%  # the %>% operator is read as "and then"
-#   partial(pred.var = "PCR") %>%
-#   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="PCR",
-#               main = "", xlim=c(0,300),ylim=c(0.3,0.6))
-# p6_PCR
+ p4_Neutrophils_perc <- rf_model1 %>%  # the %>% operator is read as "and then"
+   partial(pred.var = "Neutrophils_perc") %>%
+   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Neutrophils %",
+               main = "", xlim=c(0,1),ylim=c(0.3,0.6))
+ p4_Neutrophils_perc
+# #
+ p5_Fibrinogen_perc <- rf_model1 %>%  # the %>% operator is read as "and then"
+   partial(pred.var = "Fibrinogen") %>%
+   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Fibrinogen",
+               main = "", xlim=c(50,1000))
+ p5_Fibrinogen_perc
 # #
 # #
-# p7_Score <- rf_model1 %>%  # the %>% operator is read as "and then"
-#   partial(pred.var = "Score") %>%
-#   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Score Brescia chest-xray",
-#               main = "", xlim=c(0,18),ylim=c(0.3,0.6))
-# p7_Score
-# #
-# p8_Lymphocytes_perc <- rf_model1 %>%  # the %>% operator is read as "and then"
-#   partial(pred.var = "Lymphocytes_perc") %>%
-#   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Lymphocytes %",
-#               main = "", xlim=c(0,1),ylim=c(0.3,0.6))
-# p8_Lymphocytes_perc
+ p6_PCR <- rf_model1 %>%  # the %>% operator is read as "and then"
+   partial(pred.var = "PCR") %>%
+   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="PCR",
+               main = "", xlim=c(0,300),ylim=c(0.3,0.6))
+ p6_PCR
 # #
 # #
-# p9_Ferritin_std <- rf_model1 %>%  # the %>% operator is read as "and then"
-#   partial(pred.var = "Ferritin_std") %>%
-#   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Ferritin std",
-#               main = "", xlim=c(-4,200),ylim=c(0.3,0.6))
-# p9_Ferritin_std
+ p7_Score <- rf_model1 %>%  # the %>% operator is read as "and then"
+   partial(pred.var = "Score") %>%
+   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Score Brescia chest-xray",
+               main = "", xlim=c(0,18),ylim=c(0.3,0.6))
+ p7_Score
+# #
+ p8_Lymphocytes_perc <- rf_model1 %>%  # the %>% operator is read as "and then"
+   partial(pred.var = "Lymphocytes_perc") %>%
+   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Lymphocytes %",
+               main = "", xlim=c(0,1),ylim=c(0.3,0.6))
+ p8_Lymphocytes_perc
 # #
 # #
-# p10_Monocytes_perc <- rf_model1 %>%  # the %>% operator is read as "and then"
-#   partial(pred.var = "Monocytes_perc") %>%
-#   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Monocytes %",
-#               main = "", xlim=c(0,0.5), ylim=c(0.3,0.6))
-# p10_Monocytes_perc
-# abline(h=0.5, lty=2, col="red")
-#
-#pred regression per immagini
+ p9_Ferritin_std <- rf_model1 %>%  # the %>% operator is read as "and then"
+   partial(pred.var = "Ferritin_std") %>%
+   plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Ferritin std",
+               main = "", xlim=c(-4,200),ylim=c(0.3,0.6))
+ p9_Ferritin_std
+# #
+# #
+ p10_Monocytes_perc <- rf_model1 %>%  # the %>% operator is read as "and then"
+   partial(pred.var = "Monocytes_perc") %>%
+plotPartial(smooth = F, lwd = 2, ylab = "BS-EWM", xlab="Monocytes %",
+              main = "", xlim=c(0,0.5), ylim=c(0.3,0.6))
+ p10_Monocytes_perc
+ abline(h=0.5, lty=2, col="red")
+
+#predictions 
 pred_rf1 <-predict(rf_model1, predict.all=TRUE)
-#pred classification
-pred_rf2 <-predict(rf_model2, predict.all=TRUE)
 pred_rf1 <- predict(rf_model1, data_maroldi_M_A_1_no_miss_sub1)
 
 pred_rf1_OOS <-predict(rf_model1,data_maroldi_M_A_1_no_miss_fresh_data)
-#pred_rf2_OOS <-predict(rf_model2,data_maroldi_M_A_1_no_miss_fresh_data)
-#pred_rf1_OOS<-pred_rf1_OOS
 pred_rf1_OOS_MAY_DECEMBER<-predict(rf_model1,data_maroldi_remaining_1)
-#pred_rf2_OOS_MAY_DECEMBER<-predict(rf_model2,data_maroldi_remaining_1)
-pred_rf1_OOS_MAY_DECEMBER<-pred_rf1_OOS_MAY_DECEMBER
-pred_rf1_OOS_sec_wave<-predict(rf_model1,data_maroldi_second_wav)
-pred_rf1_OOS_sec_wave<-pred_rf1_OOS_sec_wave
 # prediction in sample model1 (RF) ####
 library(pROC)
 
