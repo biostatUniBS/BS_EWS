@@ -11,6 +11,8 @@ library(randomForest)
 
 library(tidyverse)
 library(arsenal)
+library(lattice)
+library(grid)
 
 
 if(Sys.getenv("RSTUDIO") == "1")
@@ -483,16 +485,16 @@ corrplot(rho, p.mat=p_value_cor, type="upper", tl.col = "black", order = "hclust
 
 ### define number of cluster respect the matrix with quantitative variable
 
-# sil_quant<-matrix(0,30,1)
-# for(k in 2:30){
-#   c_quant<-pam(quantitative_variable, k, diss = F, metric = "euclidean", stand = TRUE)
-#   sil_quant[k] <-c_quant$silinfo$avg.width
-# }
-# x_quant<-2:30
-# par(las=1, cex.axis=0.8, pty = "m", mar=c(3,3,1,3), family="Times")
-# plot(x_quant,sil_quant[2:30], type="l", xlab="Number of clusters", ylab="s(i)", main="Optimal number of clusters", )
-# k1<-which(sil_quant==max(sil_quant)) #in questo caso risulta 2 ma è meglio 3 (al di poco sotto)
-# 
+sil_quant<-matrix(0,30,1)
+for(k in 2:30){
+  c_quant<-pam(quantitative_variable, k, diss = F, metric = "euclidean", stand = TRUE)
+  sil_quant[k] <-c_quant$silinfo$avg.width
+}
+x_quant<-2:30
+par(las=1, cex.axis=0.8, pty = "m", mar=c(3,3,1,3), family="Times")
+plot(x_quant,sil_quant[2:30], type="l", xlab="Number of clusters", ylab="s(i)", main="Optimal number of clusters", )
+k1<-which(sil_quant==max(sil_quant)) #in questo caso risulta 2 ma è meglio 3 (al di poco sotto)
+
 #RF for the first model (all data) ####
 
 table(data_maroldi_M_A_1$Sesso)
@@ -541,13 +543,13 @@ data_maroldi_M_A_1_no_miss_sub1$outcome_dummy<-ifelse(data_maroldi_M_A_1_no_miss
 table(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy)
 rf_model1<-randomForest(outcome_dummy~.,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(19), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
 #model 1bis: no age (regression)
-rf_model1_bis<-randomForest(outcome_dummy~.,data=data_maroldi_M_A_1_no_miss_sub1[,2], ntree=10000, mtry=sqrt(19), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+rf_model1_bis<-randomForest(outcome_dummy~.,data=data_maroldi_M_A_1_no_miss_sub1[,-2], ntree=10000, mtry=sqrt(19), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
 
 #model1 (regression)
 save(rf_model1, file="rf_model1_reg.Rdata")
 
 #we extract VIM in two cases: 1) with age (rf_model1) 2) without age (rf_model1_bis)
-#rf_model1<-rf_model1_bis
+
 imp1<-importance(rf_model1_bis)
 imp_rel<-imp1/max(imp1)*100
 #imp for graphic
@@ -738,7 +740,7 @@ ci.coords(roc_model_gbm_OOS, "best",
           boot.stratified=T,
           progress=getOption("pROCProgress")$name)
 
-  #prediction OOS logit1####
+#prediction OOS logit1####
 roc_model_logit1_OOS <- roc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,prob_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="red",  lty=2, add=T)
 AUC_roc_logit1_OOS<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,prob_OOS)
 
@@ -752,7 +754,7 @@ ci.coords(roc_model_logit1_OOS, "best",
           progress=getOption("pROCProgress")$name)
 
 
-# prediction OOS model1 (RF) MAY_DECEMBER ####
+#prediction OOS model1 (RF) MAY_DECEMBER ####
 roc_modelrf1_OOS_MAY_DECEMBER <- roc(data_maroldi_remaining_1$outcome_dummy,pred_rf1_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="green4",  lty=3, add=T)
 AUC_roc_modelrf1_OOS_MAY_DECEMBER<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf1_OOS_MAY_DECEMBER)
 
@@ -777,7 +779,7 @@ ci.coords(roc_modelrf1_OOS_OTT_DEC, "best",
           progress=getOption("pROCProgress")$name)
 
 
-# prediction OOS gbm MAY_DECEMBER ####
+#prediction OOS gbm MAY_DECEMBER ####
 roc_gbm_OOS_MAY_DECEMBER <- roc(data_maroldi_remaining_1$outcome_dummy,pred_gbm_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="green4",  lty=2, add=T)
 AUC_roc_gbm_OOS_MAY_DECEMBER<-auc(data_maroldi_remaining_1$outcome_dummy,pred_gbm_OOS_MAY_DECEMBER)
 
@@ -814,6 +816,518 @@ write.table(imp1rel, file="imp1rel.txt")
 par(mar=c(3,8,2,2), cex=0.5)
 barplot(imp1rel, horiz=TRUE)
 
+# REVISION ####
+#replay to revision
+
+#LDH ####
+rf_model_LDH<-randomForest(outcome_dummy~LDH,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(1), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+
+#predictions in sample
+pred_rf_model_LDH <-predict(rf_model_LDH, predict.all=TRUE)
+pred_rf_model_LDH <- predict(rf_model_LDH, data_maroldi_M_A_1_no_miss_sub1)
+#predictions OOS
+pred_rf_model_LDH_OOS <-predict(rf_model_LDH,data_maroldi_M_A_1_no_miss_fresh_data)
+pred_rf_model_LDH_OOS_MAY_DECEMBER<-predict(rf_model_LDH,data_maroldi_remaining_1)
+
+# prediction in sample rf_model_LDH ####
+
+roc_rf_model_LDH <- roc(as.numeric(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy),pred_rf_model_LDH,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_LDH<-auc(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy,pred_rf_model_LDH)
+
+ci(roc_rf_model_LDH)
+ci.coords(roc_rf_model_LDH, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_LDH ####
+roc_rf_model_LDH_OOS <- roc(as.numeric(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy),pred_rf_model_LDH_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_LDH_OOS<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,pred_rf_model_LDH_OOS)
+
+ci(roc_rf_model_LDH_OOS)
+ci.coords(roc_rf_model_LDH_OOS, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_LDH MD ####
+roc_rf_model_LDH_OOS_MD <- roc(as.numeric(data_maroldi_remaining_1$outcome_dummy),pred_rf_model_LDH_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_LDH_OOS_MD<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf_model_LDH_OOS_MAY_DECEMBER)
+
+ci(roc_rf_model_LDH_OOS_MD)
+ci.coords(roc_rf_model_LDH_OOS_MD, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+
+#DDIMER ####
+rf_model_DDimer<-randomForest(outcome_dummy~D_dimer,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(1), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+
+
+#predictions in sample
+pred_rf_model_DDimer <-predict(rf_model_DDimer, predict.all=TRUE)
+pred_rf_model_DDimer <- predict(rf_model_DDimer, data_maroldi_M_A_1_no_miss_sub1)
+#predictions OOS
+pred_rf_model_DDimer_OOS <-predict(rf_model_DDimer,data_maroldi_M_A_1_no_miss_fresh_data)
+pred_rf_model_DDimer_OOS_MAY_DECEMBER<-predict(rf_model_DDimer,data_maroldi_remaining_1)
+
+# prediction in sample rf_model_DDimer ####
+
+roc_rf_model_DDimer <- roc(as.numeric(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy),pred_rf_model_DDimer,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_DDimer<-auc(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy,pred_rf_model_DDimer)
+
+ci(roc_rf_model_DDimer)
+ci.coords(roc_rf_model_DDimer, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_DDimer ####
+roc_rf_model_DDimer_OOS <- roc(as.numeric(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy),pred_rf_model_DDimer_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_DDimer<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,pred_rf_model_DDimer_OOS)
+
+ci(roc_rf_model_DDimer_OOS)
+ci.coords(roc_rf_model_DDimer_OOS, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_DDimer MD ####
+roc_rf_model_DDimer_OOS_MD <- roc(as.numeric(data_maroldi_remaining_1$outcome_dummy),pred_rf_model_DDimer_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_DDimer_OOS_MD<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf_model_DDimer_OOS_MAY_DECEMBER)
+
+ci(roc_rf_model_DDimer_OOS_MD)
+ci.coords(roc_rf_model_DDimer_OOS_MD, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+#Neutrophils_Lymphocytes ####
+rf_model_Neutrophils_Lymphocytes<-randomForest(outcome_dummy~Neutrophils_Lymphocytes,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(1), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+
+
+#predictions in sample
+pred_rf_model_Neutrophils_Lymphocytes <-predict(rf_model_Neutrophils_Lymphocytes, predict.all=TRUE)
+pred_rf_model_rf_model_Neutrophils_Lymphocytes <- predict(rf_model_Neutrophils_Lymphocytes, data_maroldi_M_A_1_no_miss_sub1)
+#predictions OOS
+pred_rf_model_Neutrophils_Lymphocytes_OOS <-predict(rf_model_Neutrophils_Lymphocytes,data_maroldi_M_A_1_no_miss_fresh_data)
+pred_rf_model_Neutrophils_Lymphocytes_OOS_MAY_DECEMBER<-predict(rf_model_Neutrophils_Lymphocytes,data_maroldi_remaining_1)
+
+# prediction in sample rf_model_Neutrophils_Lymphocytes ####
+
+roc_rf_model_Neutrophils_Lymphocytes <- roc(as.numeric(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy),pred_rf_model_Neutrophils_Lymphocytes,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Neutrophils_Lymphocytes<-auc(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy,pred_rf_model_Neutrophils_Lymphocytes)
+
+ci(roc_rf_model_Neutrophils_Lymphocytes)
+ci.coords(roc_rf_model_Neutrophils_Lymphocytes, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_Neutrophils_Lymphocytes ####
+roc_rf_model_Neutrophils_Lymphocytes_OOS <- roc(as.numeric(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy),pred_rf_model_Neutrophils_Lymphocytes_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Neutrophils_Lymphocytes<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,pred_rf_model_Neutrophils_Lymphocytes_OOS)
+
+ci(roc_rf_model_Neutrophils_Lymphocytes_OOS)
+ci.coords(roc_rf_model_Neutrophils_Lymphocytes_OOS, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_Neutrophils_Lymphocytes_MD ####
+roc_rf_model_Neutrophils_Lymphocytes_OOS_MD <- roc(as.numeric(data_maroldi_remaining_1$outcome_dummy),pred_rf_model_Neutrophils_Lymphocytes_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Neutrophils_Lymphocytes_OOS_MD<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf_model_Neutrophils_Lymphocytes_OOS_MAY_DECEMBER)
+
+ci(roc_rf_model_Neutrophils_Lymphocytes_OOS_MD)
+ci.coords(roc_rf_model_Neutrophils_Lymphocytes_OOS_MD, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+#Neutrophils % ####
+rf_model_Neutrophils_perc<-randomForest(outcome_dummy~Neutrophils,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(1), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+
+
+#predictions in sample
+pred_rf_model_Neutrophils_perc <-predict(rf_model_Neutrophils_perc, predict.all=TRUE)
+pred_rf_model_Neutrophils_perc <- predict(rf_model_Neutrophils_perc, data_maroldi_M_A_1_no_miss_sub1)
+#predictions OOS
+pred_rf_model_Neutrophils_perc_OOS <-predict(rf_model_Neutrophils_perc,data_maroldi_M_A_1_no_miss_fresh_data)
+pred_rf_model_Neutrophils_perc_OOS_MAY_DECEMBER<-predict(rf_model_Neutrophils_perc,data_maroldi_remaining_1)
+
+# prediction in sample rf_model_Neutrophils_perc ####
+
+roc_rf_model_Neutrophils_perc <- roc(as.numeric(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy),pred_rf_model_Neutrophils_perc,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Neutrophils_perc <-auc(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy,pred_rf_model_Neutrophils_perc)
+
+ci(roc_rf_model_Neutrophils_perc)
+ci.coords(roc_rf_model_Neutrophils_perc, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_Neutrophils_perc ####
+roc_rf_model_Neutrophils_perc_OOS <- roc(as.numeric(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy),pred_rf_model_Neutrophils_perc_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Neutrophils_perc_OOS<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,pred_rf_model_Neutrophils_perc_OOS)
+
+ci(roc_rf_model_Neutrophils_perc_OOS)
+ci.coords(roc_rf_model_Neutrophils_perc_OOS, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_Neutrophils_perc_MD ####
+roc_rf_model_Neutrophils_perc_OOS_MD <- roc(as.numeric(data_maroldi_remaining_1$outcome_dummy),pred_rf_model_Neutrophils_perc_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Neutrophils_perc_OOS_MD<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf_model_Neutrophils_perc_OOS_MAY_DECEMBER)
+
+ci(roc_rf_model_Neutrophils_perc_OOS_MD)
+ci.coords(roc_rf_model_Neutrophils_perc_OOS_MD, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+#Fibrinogen ####
+rf_model_Fibrinogen<-randomForest(outcome_dummy~Fibrinogen,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(1), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+
+
+#predictions in sample
+pred_rf_model_Fibrinogen <-predict(rf_model_Fibrinogen, predict.all=TRUE)
+pred_rf_model_Fibrinogen <- predict(rf_model_Fibrinogen, data_maroldi_M_A_1_no_miss_sub1)
+#predictions OOS
+pred_rf_model_Fibrinogen_OOS <-predict(rf_model_Fibrinogen,data_maroldi_M_A_1_no_miss_fresh_data)
+pred_rf_model_Fibrinogen_OOS_MAY_DECEMBER<-predict(rf_model_Fibrinogen,data_maroldi_remaining_1)
+
+# prediction in sample rf_model_Fibrinogen ####
+
+roc_rf_model_Fibrinogen <- roc(as.numeric(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy),pred_rf_model_Fibrinogen,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Fibrinogen <-auc(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy,pred_rf_model_Fibrinogen)
+
+ci(roc_rf_model_Fibrinogen)
+ci.coords(roc_rf_model_Fibrinogen, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_Fibrinogen ####
+roc_rf_model_Fibrinogen_OOS <- roc(as.numeric(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy),pred_rf_model_Fibrinogen_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Fibrinogen_OOS<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,pred_rf_model_Fibrinogen_OOS)
+
+ci(roc_rf_model_Fibrinogen_OOS)
+ci.coords(roc_rf_model_Fibrinogen_OOS, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_FIBRINOGEN_MD ####
+roc_rf_model_Fibrinogen_OOS_MD <- roc(as.numeric(data_maroldi_remaining_1$outcome_dummy),pred_rf_model_Fibrinogen_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Fibrinogen_perc_OOS_MD<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf_model_Fibrinogen_OOS_MAY_DECEMBER)
+
+ci(roc_rf_model_Fibrinogen_OOS_MD)
+ci.coords(roc_rf_model_Fibrinogen_OOS_MD, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+#PCR ####
+rf_model_PCR<-randomForest(outcome_dummy~PCR,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(1), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+
+
+#predictions in sample
+pred_rf_model_PCR <-predict(rf_model_PCR, predict.all=TRUE)
+pred_rf_model_PCR <- predict(rf_model_PCR, data_maroldi_M_A_1_no_miss_sub1)
+#predictions OOS
+pred_rf_model_PCR_OOS <-predict(rf_model_PCR,data_maroldi_M_A_1_no_miss_fresh_data)
+pred_rf_model_PCR_OOS_MAY_DECEMBER<-predict(rf_model_PCR,data_maroldi_remaining_1)
+
+# prediction in sample rf_model_PCR ####
+
+roc_rf_model_PCR <- roc(as.numeric(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy),pred_rf_model_PCR,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_PCR <-auc(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy,pred_rf_model_PCR)
+
+ci(roc_rf_model_PCR)
+ci.coords(roc_rf_model_PCR, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_PCR ####
+roc_rf_model_PCR_OOS <- roc(as.numeric(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy),pred_rf_model_PCR_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_PCR_OOS<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,pred_rf_model_PCR_OOS)
+
+ci(roc_rf_model_PCR_OOS)
+ci.coords(roc_rf_model_PCR_OOS, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_PCR_MD ####
+roc_rf_model_PCR_OOS_MD <- roc(as.numeric(data_maroldi_remaining_1$outcome_dummy),pred_rf_model_PCR_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_PCR_OOS_MD<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf_model_PCR_OOS_MAY_DECEMBER)
+
+ci(roc_rf_model_PCR_OOS_MD)
+ci.coords(roc_rf_model_PCR_OOS_MD, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+#Score ####
+rf_model_score<-randomForest(outcome_dummy~Score,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(1), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+
+
+#predictions in sample
+pred_rf_model_Score <-predict(rf_model_score, predict.all=TRUE)
+pred_rf_model_Score <- predict(rf_model_score, data_maroldi_M_A_1_no_miss_sub1)
+#predictions OOS
+pred_rf_model_score_OOS <-predict(rf_model_score,data_maroldi_M_A_1_no_miss_fresh_data)
+pred_rf_model_score_OOS_MAY_DECEMBER<-predict(rf_model_score,data_maroldi_remaining_1)
+
+# prediction in sample rf_model_Score ####
+
+roc_rf_model_score <- roc(as.numeric(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy),pred_rf_model_Score,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_score <-auc(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy,pred_rf_model_Score)
+
+ci(roc_rf_model_score)
+ci.coords(roc_rf_model_score, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_score ####
+roc_rf_model_score_OOS <- roc(as.numeric(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy),pred_rf_model_score_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_score_OOS<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,pred_rf_model_score_OOS)
+
+ci(roc_rf_model_score_OOS)
+ci.coords(roc_rf_model_score_OOS, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_score_MD ####
+roc_rf_model_score_OOS_MD <- roc(as.numeric(data_maroldi_remaining_1$outcome_dummy),pred_rf_model_score_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_score_OOS_MD<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf_model_score_OOS_MAY_DECEMBER)
+
+ci(roc_rf_model_score_OOS_MD)
+ci.coords(roc_rf_model_score_OOS_MD, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+#Lymphocytes_perc ####
+rf_model_Lymphocytes_perc<-randomForest(outcome_dummy~Lymphocytes_perc,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(1), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+
+
+#predictions in sample
+pred_rf_model_Lymphocytes_perc <-predict(rf_model_Lymphocytes_perc, predict.all=TRUE)
+pred_rf_model_Lymphocytes_perc <- predict(rf_model_Lymphocytes_perc, data_maroldi_M_A_1_no_miss_sub1)
+#predictions OOS
+pred_rf_model_Lymphocytes_perc_OOS <-predict(rf_model_Lymphocytes_perc,data_maroldi_M_A_1_no_miss_fresh_data)
+pred_rf_model_Lymphocytes_perc_OOS_MAY_DECEMBER<-predict(rf_model_Lymphocytes_perc,data_maroldi_remaining_1)
+
+# prediction in sample rf_model_Lymphocytes_perc ####
+
+roc_rf_model_Lymphocytes_perc <- roc(as.numeric(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy),pred_rf_model_Lymphocytes_perc,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Lymphocytes_perc <-auc(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy,pred_rf_model_Lymphocytes_perc)
+
+ci(roc_rf_model_Lymphocytes_perc)
+ci.coords(roc_rf_model_Lymphocytes_perc, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_Lymphocytes_perc ####
+roc_rf_model_Lymphocytes_perc_OOS <- roc(as.numeric(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy),pred_rf_model_Lymphocytes_perc_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Lymphocytes_perc_OOS<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,pred_rf_model_Lymphocytes_perc_OOS)
+
+ci(roc_rf_model_Lymphocytes_perc_OOS)
+ci.coords(roc_rf_model_Lymphocytes_perc_OOS, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_Lymphocytes_perc_OOS_MD ####
+roc_rf_model_Lymphocytes_OOS_MD <- roc(as.numeric(data_maroldi_remaining_1$outcome_dummy),pred_rf_model_Lymphocytes_perc_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_Lymphocytes_OOS_MD<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf_model_Lymphocytes_perc_OOS_MAY_DECEMBER)
+
+ci(roc_rf_model_Lymphocytes_OOS_MD)
+ci.coords(roc_rf_model_Lymphocytes_OOS_MD, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+#Ferritin std ####
+rf_model_ferritin<-randomForest(outcome_dummy~Ferritin_std,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(1), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+
+
+#predictions in sample
+pred_rf_model_ferritin <-predict(rf_model_ferritin, predict.all=TRUE)
+pred_rf_model_ferritin <- predict(rf_model_ferritin, data_maroldi_M_A_1_no_miss_sub1)
+#predictions OOS
+pred_rf_model_ferritin_OOS <-predict(rf_model_ferritin,data_maroldi_M_A_1_no_miss_fresh_data)
+pred_rf_model_ferritin_OOS_MAY_DECEMBER<-predict(rf_model_ferritin,data_maroldi_remaining_1)
+
+# prediction in sample rf_model_ferritin ####
+
+roc_rf_model_ferritin <- roc(as.numeric(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy),pred_rf_model_ferritin,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_ferritin <-auc(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy,pred_rf_model_ferritin)
+
+ci(roc_rf_model_ferritin)
+ci.coords(roc_rf_model_ferritin, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_ferritin ####
+roc_rf_model_ferritin_OOS <- roc(as.numeric(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy),pred_rf_model_ferritin_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_ferritin_OOS<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,pred_rf_model_ferritin_OOS)
+
+ci(roc_rf_model_ferritin_OOS)
+ci.coords(roc_rf_model_ferritin_OOS, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_ferritin_OOS_MD ####
+roc_rf_model_ferritin_OOS_MD <- roc(as.numeric(data_maroldi_remaining_1$outcome_dummy),pred_rf_model_ferritin_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_ferritin_OOS_MD<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf_model_ferritin_OOS_MAY_DECEMBER)
+
+ci(roc_rf_model_ferritin_OOS_MD)
+ci.coords(roc_rf_model_ferritin_OOS_MD, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+#Monocite ####
+rf_model_Monocytes<-randomForest(outcome_dummy~Monocytes,data=data_maroldi_M_A_1_no_miss_sub1, ntree=10000, mtry=sqrt(1), replace=TRUE, importante=TRUE, proximity = TRUE, type="regression")
+
+
+#predictions in sample
+pred_rf_model_Monocytes <-predict(rf_model_Monocytes, predict.all=TRUE)
+pred_rf_model_Monocytes <- predict(rf_model_Monocytes, data_maroldi_M_A_1_no_miss_sub1)
+#predictions OOS
+pred_rf_model_Monocytes_OOS <-predict(rf_model_Monocytes,data_maroldi_M_A_1_no_miss_fresh_data)
+pred_rf_model_Monocytes_OOS_MAY_DECEMBER<-predict(rf_model_Monocytes,data_maroldi_remaining_1)
+
+# prediction in sample rf_model_Monocytes ####
+
+roc_rf_model_monocytes <- roc(as.numeric(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy),pred_rf_model_Monocytes,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_monocites <-auc(data_maroldi_M_A_1_no_miss_sub1$outcome_dummy,pred_rf_model_Monocytes)
+
+ci(roc_rf_model_monocytes)
+ci.coords(roc_rf_model_monocytes, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_monocytes ####
+roc_rf_model_monocytes_OOS <- roc(as.numeric(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy),pred_rf_model_Monocytes_OOS,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_monocytes_OOS<-auc(data_maroldi_M_A_1_no_miss_fresh_data$outcome_dummy,pred_rf_model_Monocytes_OOS)
+
+ci(roc_rf_model_monocytes_OOS)
+ci.coords(roc_rf_model_monocytes_OOS, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
+
+# prediction OOS rf_model_monocytes_OOS_MD ####
+roc_rf_model_monocytes_OOS_MD <- roc(as.numeric(data_maroldi_remaining_1$outcome_dummy),pred_rf_model_Monocytes_OOS_MAY_DECEMBER,percent=F, smooth=F, plot=TRUE, na.rm=T, col="blue",  lty=1, title="Random Forest", cex.axis=1, cex.xlab=1, cex.ylab=1)
+AUC_roc_model_monocytes_OOS_MD<-auc(data_maroldi_remaining_1$outcome_dummy,pred_rf_model_Monocytes_OOS_MAY_DECEMBER)
+
+ci(roc_rf_model_monocytes_OOS_MD)
+ci.coords(roc_rf_model_monocytes_OOS_MD, "best",
+          input=c("threshold", "specificity", "sensitivity"),
+          best.method=c("youden"),
+          boot.n=10000,
+          best.policy="random",
+          boot.stratified=T,
+          progress=getOption("pROCProgress")$name)
 
 
 
